@@ -8,6 +8,7 @@ class Music
   constructor: (@url) ->
     @songs = []
     @album = 'youqing'
+    @albumImgUrl = ''
     @artist = 'youqing'
     @headers = {
       'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.81 Safari/537.3'
@@ -27,6 +28,19 @@ class Music
           return console.log err if err
 
           $ = cheerio.load(body)
+          imgUrl = $(".special img")
+          album = $("h4.name")
+          describe = $(".describe").first()
+          if imgUrl.length
+            self.albumImgUrl = imgUrl.attr('src')
+
+          if album.length
+            self.album = album.text()
+
+          if describe.length
+            self.artist = $(describe).text()
+
+
           songs_text = $('script:contains("songs")').text()
           # todo oh， 这里可能存在安全隐患，暂时没有找到替代
           jsonSongs = eval(songs_text)
@@ -41,6 +55,7 @@ class Music
           self.songs.push tmp
 
         cb()
+
     ]
 
   getSongUrl:(cb) ->
@@ -102,14 +117,43 @@ class Music
     cb()
 
 
+  downAlbumImg:(cb) ->
+    self = @
+    extArr = self.albumImgUrl.split('.')
+    ext = extArr[extArr.length - 1]
+    writeImg = fs.createWriteStream(self.album + '/' + self.album + '.' + ext)
 
-music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2406399&type=2&source=2&token=0f72e10819af1f35f9a90a053b9cc9f3')
+    request.get self.albumImgUrl
+
+    .on 'response', (res) ->
+      console.log "................................."
+      console.log "#{self.album}  #{self.albumImgUrl}"
+      console.log(res.statusCode)
+      if res.statusCode is 200
+        console.log '连接下载歌曲专辑图片成功'
+
+    .on "error", (err) ->
+      console.log "#{self.album}  #{self.albumImgUrl} down error: #{err}"
+      return console.log "下载歌曲专辑图片失败失败"
+
+    .on 'end', () ->
+      console.log "#{self.album} #{self.albumImgUrl} 歌曲下载成功"
+      console.log ".................................\n"
+      cb()
+    .pipe(writeImg)
+
+
+
+music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2465943&type=2&source=2&token=cd09f9d12ac67fe1891f02af6ac80d51')
 async.series [
   (cb) ->
     music.getUrlInfo cb
 
   (cb) ->
     music.createAlbumFolder cb
+
+  (cb) ->
+    music.downAlbumImg cb
 
   (cb) ->
     music.getSongUrl cb

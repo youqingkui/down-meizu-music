@@ -15,6 +15,7 @@
       this.url = url;
       this.songs = [];
       this.album = 'youqing';
+      this.albumImgUrl = '';
       this.artist = 'youqing';
       this.headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.81 Safari/537.3'
@@ -32,11 +33,23 @@
             headers: self.headers
           };
           return request.get(op, function(err, res, body) {
-            var $, jsonSongs, songs_text;
+            var $, album, describe, imgUrl, jsonSongs, songs_text;
             if (err) {
               return console.log(err);
             }
             $ = cheerio.load(body);
+            imgUrl = $(".special img");
+            album = $("h4.name");
+            describe = $(".describe").first();
+            if (imgUrl.length) {
+              self.albumImgUrl = imgUrl.attr('src');
+            }
+            if (album.length) {
+              self.album = album.text();
+            }
+            if (describe.length) {
+              self.artist = $(describe).text();
+            }
             songs_text = $('script:contains("songs")').text();
             jsonSongs = eval(songs_text);
             return callback(null, jsonSongs);
@@ -119,17 +132,42 @@
       return cb();
     };
 
+    Music.prototype.downAlbumImg = function(cb) {
+      var ext, extArr, self, writeImg;
+      self = this;
+      extArr = self.albumImgUrl.split('.');
+      ext = extArr[extArr.length - 1];
+      writeImg = fs.createWriteStream(self.album + '/' + self.album + '.' + ext);
+      return request.get(self.albumImgUrl).on('response', function(res) {
+        console.log(".................................");
+        console.log("" + self.album + "  " + self.albumImgUrl);
+        console.log(res.statusCode);
+        if (res.statusCode === 200) {
+          return console.log('连接下载歌曲专辑图片成功');
+        }
+      }).on("error", function(err) {
+        console.log("" + self.album + "  " + self.albumImgUrl + " down error: " + err);
+        return console.log("下载歌曲专辑图片失败失败");
+      }).on('end', function() {
+        console.log("" + self.album + " " + self.albumImgUrl + " 歌曲下载成功");
+        console.log(".................................\n");
+        return cb();
+      }).pipe(writeImg);
+    };
+
     return Music;
 
   })();
 
-  music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2406399&type=2&source=2&token=0f72e10819af1f35f9a90a053b9cc9f3');
+  music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2465943&type=2&source=2&token=cd09f9d12ac67fe1891f02af6ac80d51');
 
   async.series([
     function(cb) {
       return music.getUrlInfo(cb);
     }, function(cb) {
       return music.createAlbumFolder(cb);
+    }, function(cb) {
+      return music.downAlbumImg(cb);
     }, function(cb) {
       return music.getSongUrl(cb);
     }, function(cb) {
