@@ -4,134 +4,122 @@ cheerio = require("cheerio")
 fs = require("fs")
 
 
-Music = (@url) ->
-  @songs = []
-  @album = 'youqing'
-  @artist = 'youqing'
-  @song_name = ''
-  @image_url = ''
-  @song_url = ''
-  @songDownUrl = ''
-
-  return
+class Music
+  constructor: (@url) ->
+    @songs = []
+    @album = 'youqing'
+    @artist = 'youqing'
+    @headers = {
+      'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.81 Safari/537.3'
+    }
 
 
-Music::getUrlInfo = () ->
+  getUrlInfo:(cb) ->
+    self = @
+    async.waterfall [
+      getJSON = (callback) ->
+        op = {
+          url:self.url
+          headers:self.headers
 
-  self = @
-  async.series [
-    (cb) ->
-      request.get self.url, (err, res, body) ->
-        if err
-          return console.log err
+        }
+        request.get op, (err, res, body) ->
+          return console.log err if err
 
-        $ = cheerio.load(body)
-        songs_text = $('script:contains("songs")').text()
-        # todo oh， 这里可能存在安全隐患，暂时没有找到替代
-        self.songs = eval(songs_text)
+          $ = cheerio.load(body)
+          songs_text = $('script:contains("songs")').text()
+          # todo oh， 这里可能存在安全隐患，暂时没有找到替代
+          jsonSongs = eval(songs_text)
+          callback(null, jsonSongs)
+
+
+      getSongsInfo = (songs, callback) ->
+        songs.forEach (item) ->
+          tmp = {}
+          tmp.title = item.title
+          tmp.url = item.url
+          self.songs.push tmp
+
         cb()
+    ]
 
-    (cb) ->
-      async.eachSeries @songs, (item, callback) ->
-        self.album = item.url
-        self.artist = item.artist
-        self.image_url = item.image
-        self.song_url = item.url
-        self.song_name = item.title
-        self.createAlbumFolder(callback)
+  getSongUrl:(cb) ->
+    self = @
+    bashUrl = 'http://music.meizu.com'
+    async.eachSeries self.songs, (item, callback) ->
+      url = bashUrl + item.url
+      request.get url, (err, res, body) ->
+        return console.log err if err
 
-  ]
+        data = JSON.parse(body)
+        if data.code != 200
+          return console.log "获取下载错误200", data
 
+        item.downUrl = data.value.url
+        item.ext = data.value.format
+        callback()
 
-
-
-Music::createAlbumFolder = (cb) ->
-  # 创建专辑文件夹
-
-  self = @
-  unless fs.existsSync(self.album)
-    fs.mkdirSync(self.album)
-
-  self.downAlbumImage(cb)
+    ,() ->
+      cb()
 
 
-Music::downAlbumImage = (cb) ->
-  # 下载专辑图片
+  downSongs:(cb) ->
+    self = @
+    async.eachSeries self.songs, (item, callback) ->
+      self.downSong(item, callback)
 
-  self = @
-  writeImg = fs.createWriteStream(self.album + '/' + self.album + ".jpg")
-  request.get self.image_url
+    ,() ->
+      console.log "all down"
 
-  .on 'response', (res) ->
-    console.log "................................."
-    console.log "#{self.album}  #{self.image_url}"
-    console.log(res.statusCode)
-    if res.statusCode is 200
-      console.log '连接下载专辑图片成功'
+  downSong:(info, cb) ->
+    self = @
+    writeSong = fs.createWriteStream(self.album + '/' + info.title + '.' + info.ext)
+    request.get info.downUrl
 
-  .on "error", (err) ->
-    console.log "#{self.album}  #{self.image_url} down error: #{err}"
-    return console.log "下载专辑图片失败"
+    .on 'response', (res) ->
+      console.log "................................."
+      console.log "#{self.album}  #{info.downUrl}"
+      console.log(res.statusCode)
+      if res.statusCode is 200
+        console.log '连接下载歌曲成功'
 
-  .on 'end', () ->
-    console.log "#{self.album} 图片下载成功"
-    console.log ".................................\n"
-    cb()
-  .pipe(writeImg)
+    .on "error", (err) ->
+      console.log "#{self.album}  #{info.downUrl} down error: #{err}"
+      return console.log "下载歌曲失败"
 
-Music::getSongUrl = (cb) ->
-  # 获取下载歌曲链接
+    .on 'end', () ->
+      console.log "#{self.album} #{info.title} 歌曲下载成功"
+      console.log ".................................\n"
+      cb()
+    .pipe(writeSong)
 
-  self = @
-  host = 'http://music.meizu.com'
-  comUrl = host + self.song_url
-  request.get comUrl, (err, res, body) ->
-    if err
-      return console.log err
 
-    data = JSON.parse(body)
-    if data.code != 200
-      return "获取下载错误200"
+  createAlbumFolder:(cb) ->
+    self = @
+    unless fs.existsSync(self.album)
+      fs.mkdirSync(self.album)
 
-    self.songDownUrl = data.value.url
     cb()
 
-Music::downSong = (cb) ->
-  # 下载歌曲
-
-  self = @
-  writeSong = fs.createWriteStream(self.album + '/' + self.song_name + ".m4a")
-  request.get self.downSong()
-
-  .on 'response', (res) ->
-    console.log "................................."
-    console.log "#{self.album}  #{self.image_url}"
-    console.log(res.statusCode)
-    if res.statusCode is 200
-      console.log '连接下载歌曲成功'
-
-  .on "error", (err) ->
-    console.log "#{self.album}  #{self.image_url} down error: #{err}"
-    return console.log "下载专歌曲失败"
-
-  .on 'end', () ->
-    console.log "#{self.album} 歌曲下载成功"
-    console.log ".................................\n"
-    cb()
-  .pipe(writeSong)
 
 
+music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2406399&type=2&source=2&token=0f72e10819af1f35f9a90a053b9cc9f3')
+async.series [
+  (cb) ->
+    music.getUrlInfo cb
+
+  (cb) ->
+    music.createAlbumFolder cb
+
+  (cb) ->
+    music.getSongUrl cb
 
 
+  (cb) ->
+    music.downSongs cb
 
 
-
-
-
-
-
-
-
+]
 
 
 
