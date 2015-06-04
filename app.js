@@ -151,25 +151,31 @@
       }).pipe(writeImg);
     };
 
+    Music.prototype.doTask = function() {
+      var self;
+      self = this;
+      return async.series([
+        function(cb) {
+          return self.getUrlInfo(cb);
+        }, function(cb) {
+          return self.createAlbumFolder(cb);
+        }, function(cb) {
+          return self.downAlbumImg(cb);
+        }, function(cb) {
+          return self.getSongUrl(cb);
+        }, function(cb) {
+          return self.downSongs(cb);
+        }
+      ]);
+    };
+
     return Music;
 
   })();
 
   music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2318991&type=2&source=2&token=3a3322513c2750ad80c5149adb3795d6');
 
-  async.series([
-    function(cb) {
-      return music.getUrlInfo(cb);
-    }, function(cb) {
-      return music.createAlbumFolder(cb);
-    }, function(cb) {
-      return music.downAlbumImg(cb);
-    }, function(cb) {
-      return music.getSongUrl(cb);
-    }, function(cb) {
-      return music.downSongs(cb);
-    }
-  ]);
+  music.doTask();
 
 }).call(this);
 

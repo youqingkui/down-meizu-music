@@ -143,27 +143,34 @@ class Music
     .pipe(writeImg)
 
 
+  doTask:() ->
+    self = @
+    async.series [
+      (cb) ->
+        self.getUrlInfo cb
+
+      (cb) ->
+        self.createAlbumFolder cb
+
+      (cb) ->
+        self.downAlbumImg cb
+
+      (cb) ->
+        self.getSongUrl cb
+
+
+      (cb) ->
+        self.downSongs cb
+
+
+    ]
+
+
+
 
 music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2318991&type=2&source=2&token=3a3322513c2750ad80c5149adb3795d6')
-async.series [
-  (cb) ->
-    music.getUrlInfo cb
+music.doTask()
 
-  (cb) ->
-    music.createAlbumFolder cb
-
-  (cb) ->
-    music.downAlbumImg cb
-
-  (cb) ->
-    music.getSongUrl cb
-
-
-  (cb) ->
-    music.downSongs cb
-
-
-]
 
 
 
