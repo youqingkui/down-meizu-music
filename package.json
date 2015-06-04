@@ -1,10 +1,38 @@
 {
-  "name": "application-name",
+  "name": "meizu-music-down",
   "version": "0.0.1",
   "dependencies": {
     "async": "^0.9.0",
     "cheerio": "^0.18.0",
     "optimist": "^0.6.1",
     "request": "^2.53.0"
-  }
+  },
+  "description": "下载魅族分享的音乐",
+  "bin": {
+    "music-mz": "./app.js"
+  },
+  "main": "app.js",
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/youqingkui/down-meizu-music.git"
+  },
+  "keywords": [
+    "meizu",
+    "music",
+    "share",
+    "node"
+  ],
+  "author": "youqingkui@foxmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/youqingkui/down-meizu-music/issues"
+  },
+  "homepage": "https://github.com/youqingkui/down-meizu-music"
 }
