@@ -177,8 +177,6 @@
 
   })();
 
-  console.log(argv);
-
   url = argv._[0];
 
   if (!url) {
