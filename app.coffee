@@ -92,14 +92,14 @@ class Music
     request.get info.downUrl
 
     .on 'response', (res) ->
-      console.log "................................."
-      console.log "#{self.album}  #{info.downUrl}"
+#      console.log "................................."
+#      console.log "#{self.album}  #{info.downUrl}"
       console.log(res.statusCode)
       if res.statusCode is 200
-        console.log '连接下载歌曲成功'
+        console.log "连接下载歌曲#{info.title}成功"
 
     .on "error", (err) ->
-      console.log "#{self.album}  #{info.downUrl} down error: #{err}"
+      console.log "#{self.album} #{info.title}  #{info.downUrl} down error: #{err}"
       return console.log "下载歌曲失败"
 
     .on 'end', () ->
@@ -126,25 +126,25 @@ class Music
     request.get self.albumImgUrl
 
     .on 'response', (res) ->
-      console.log "................................."
-      console.log "#{self.album}  #{self.albumImgUrl}"
+#      console.log "................................."
+#      console.log "#{self.album}  #{self.albumImgUrl}"
       console.log(res.statusCode)
       if res.statusCode is 200
-        console.log '连接下载歌曲专辑图片成功'
+        console.log '连接下载歌曲专辑图片成功', self.albumImgUrl
 
     .on "error", (err) ->
       console.log "#{self.album}  #{self.albumImgUrl} down error: #{err}"
       return console.log "下载歌曲专辑图片失败失败"
 
     .on 'end', () ->
-      console.log "#{self.album} #{self.albumImgUrl} 歌曲下载成功"
+      console.log "#{self.album} #{self.albumImgUrl} 【专辑图片】下载成功"
       console.log ".................................\n"
       cb()
     .pipe(writeImg)
 
 
 
-music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2465943&type=2&source=2&token=cd09f9d12ac67fe1891f02af6ac80d51')
+music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2318991&type=2&source=2&token=3a3322513c2750ad80c5149adb3795d6')
 async.series [
   (cb) ->
     music.getUrlInfo cb
