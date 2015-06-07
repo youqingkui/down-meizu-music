@@ -36,14 +36,14 @@ class Music
             self.albumImgUrl = imgUrl.attr('src')
 
           if album.length
-            self.album = album.text()
+            self.album = self.changeSymbol(album.text())
 
           if describe.length
-            self.artist = $(describe).text()
+            self.artist = self.changeSymbol($(describe).text())
           else
             songs_text = $('script:contains("url")').text()
             return console.log "没有发现分享里面的东西1" unless songs_text
-            self.album = $(".singer").text()
+            self.album = self.changeSymbol($(".singer").text())
             url = self.getSingSongUrl(songs_text)
             arr = []
             tmp = {}
@@ -66,7 +66,7 @@ class Music
       getSongsInfo = (songs, callback) ->
         songs.forEach (item) ->
           tmp = {}
-          tmp.title = item.title
+          tmp.title = self.changeSymbol(item.title)
           tmp.url = item.url
           self.songs.push tmp
 
@@ -79,6 +79,11 @@ class Music
     url = arr1[7]
     return url
 
+  changeSymbol:(text) ->
+    text = text.replace(/\//g, '-')
+    text = text.replace(/\s+/g,'-')
+    console.log text
+    return text
 
 
 

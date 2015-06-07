@@ -48,16 +48,16 @@
               self.albumImgUrl = imgUrl.attr('src');
             }
             if (album.length) {
-              self.album = album.text();
+              self.album = self.changeSymbol(album.text());
             }
             if (describe.length) {
-              self.artist = $(describe).text();
+              self.artist = self.changeSymbol($(describe).text());
             } else {
               songs_text = $('script:contains("url")').text();
               if (!songs_text) {
                 return console.log("没有发现分享里面的东西1");
               }
-              self.album = $(".singer").text();
+              self.album = self.changeSymbol($(".singer").text());
               url = self.getSingSongUrl(songs_text);
               arr = [];
               tmp = {};
@@ -77,7 +77,7 @@
           songs.forEach(function(item) {
             var tmp;
             tmp = {};
-            tmp.title = item.title;
+            tmp.title = self.changeSymbol(item.title);
             tmp.url = item.url;
             return self.songs.push(tmp);
           });
@@ -91,6 +91,13 @@
       arr1 = text.split('"');
       url = arr1[7];
       return url;
+    };
+
+    Music.prototype.changeSymbol = function(text) {
+      text = text.replace(/\//g, '-');
+      text = text.replace(/\s+/g, '-');
+      console.log(text);
+      return text;
     };
 
     Music.prototype.getSongUrl = function(cb) {
