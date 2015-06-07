@@ -41,9 +41,17 @@ class Music
           if describe.length
             self.artist = $(describe).text()
           else
+            songs_text = $('script:contains("url")').text()
+            self.album = $(".singer").text()
+            url = self.getSingSongUrl(songs_text)
+            arr = []
             tmp = {}
             tmp.title = $("h4.name").text()
-            tmp
+            tmp.url = url
+            arr.push(tmp)
+            return callback(null, arr)
+
+
 
 
 
@@ -65,10 +73,11 @@ class Music
     ]
 
   getSingSongUrl:(text) ->
-    arr1 = text.splt(';')
-    url1 = arr1[2]
-    arr2 = url1.split('=')
-    
+    arr1 = text.split('"')
+    url = arr1[7]
+    return url
+
+
 
 
   getSongUrl:(cb) ->
@@ -78,7 +87,6 @@ class Music
       url = bashUrl + item.url
       request.get url, (err, res, body) ->
         return console.log err if err
-
         data = JSON.parse(body)
         if data.code != 200
           return console.log "获取下载错误200", data
@@ -181,16 +189,16 @@ class Music
 
 
 
-#music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2318991&type=2&source=2&token=3a3322513c2750ad80c5149adb3795d6')
-#music.doTask()
+music = new Music('http://music.meizu.com/share/distribute.do?style=2&id=2318991&type=2&source=2&token=3a3322513c2750ad80c5149adb3795d6')
+music.doTask()
 #console.log argv
-url = argv._[0]
-if not url
-  console.log "需要输入从魅族音乐分享出来的专辑URL"
-
-else
-  music = new Music(url)
-  music.doTask()
+#url = argv._[0]
+#if not url
+#  console.log "需要输入从魅族音乐分享出来的专辑URL"
+#
+#else
+#  music = new Music(url)
+#  music.doTask()
 
 
 
