@@ -40,6 +40,11 @@ class Music
 
           if describe.length
             self.artist = $(describe).text()
+          else
+            tmp = {}
+            tmp.title = $("h4.name").text()
+            tmp
+
 
 
           songs_text = $('script:contains("songs")').text()
@@ -58,6 +63,13 @@ class Music
         cb()
 
     ]
+
+  getSingSongUrl:(text) ->
+    arr1 = text.splt(';')
+    url1 = arr1[2]
+    arr2 = url1.split('=')
+    
+
 
   getSongUrl:(cb) ->
     self = @
